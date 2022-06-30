@@ -1,12 +1,19 @@
-from certis.util import *
-from certis.base import *
-from certis.constants import *
-from typing import *
+import warnings
+from typing import Any
+from typing import Dict
+from typing import List
+from typing import Optional
 
-import tqdm
 import numpy as np
 import pandas as pd
-import warnings
+import tqdm
+from certis.base import Action
+from certis.base import Logger
+from certis.base import Strategy
+from certis.constants import OrderSide
+from certis.constants import OrderType
+from certis.util import dataframe_as_list_of_dict
+from certis.util import generate_random_string
 
 warnings.filterwarnings("ignore")
 
@@ -17,13 +24,13 @@ class MarketInfo:
     """
 
     def __init__(
-            self,
-            maker_fee: float,
-            taker_fee: float,
-            slippage: float,
-            tick_size: float,
-            minimum_order_size: float,
-            **kwargs,
+        self,
+        maker_fee: float,
+        taker_fee: float,
+        slippage: float,
+        tick_size: float,
+        minimum_order_size: float,
+        **kwargs,
     ):
         """
         initializes MarketInfo class, takes all these market information we need
@@ -112,9 +119,7 @@ class MarketInfo:
         :return: trimmed order price
         """
         return (
-            (price // self._tick_size) * self._tick_size
-            if price is not None
-            else None
+            (price // self._tick_size) * self._tick_size if price is not None else None
         )
 
     def apply_slippage(self, price: float, side: int) -> float:
@@ -140,14 +145,14 @@ class Order(Action):
     """
 
     def __init__(
-            self,
-            order_side=None,
-            order_quantity=None,
-            order_type: str = None,
-            order_price: Optional[np.float64] = None,
-            reduce_only: bool = False,
+        self,
+        order_side=None,
+        order_quantity=None,
+        order_type: str = None,
+        order_price: Optional[np.float64] = None,
+        reduce_only: bool = False,
     ):
-        super(Order, self).__init__()
+        super().__init__()
         self._id = generate_random_string()
 
         self._side = order_side
@@ -161,8 +166,8 @@ class Order(Action):
             self._price = None
 
         if self._type in (
-                OrderType.STOP_LOSS_MARKET,
-                OrderType.TAKE_PROFIT_MARKET,
+            OrderType.STOP_LOSS_MARKET,
+            OrderType.TAKE_PROFIT_MARKET,
         ):
             self._reduce_only = True
 
@@ -275,9 +280,9 @@ class Order(Action):
 
         :return: None
         """
-        if not self._type in [OrderType.STOP_LOSS_MARKET, OrderType.TAKE_PROFIT_MARKET]:
-            if not self._side in OrderSide.SIDES:
-                raise ValueError("got invalid order side: {}".format(self._side))
+        if self._type not in [OrderType.STOP_LOSS_MARKET, OrderType.TAKE_PROFIT_MARKET]:
+            if self._side not in OrderSide.SIDES:
+                raise ValueError(f"got invalid order side: {self._side}")
 
     def _check_order_type_validity(self) -> None:
         """
@@ -289,21 +294,21 @@ class Order(Action):
         :return: None
         """
 
-        if not self._type in OrderType.ORDERS:
-            raise ValueError("Got Invalid Order: {}".format(self._type))
+        if self._type not in OrderType.ORDERS:
+            raise ValueError(f"Got Invalid Order: {self._type}")
 
-        if not self._type in [OrderType.STOP_LOSS_MARKET, OrderType.TAKE_PROFIT_MARKET]:
+        if self._type not in [OrderType.STOP_LOSS_MARKET, OrderType.TAKE_PROFIT_MARKET]:
             if self.quantity is None or self.side is None:
-                raise ValueError("quantity and side is nesscery except TP/SL Orders")
+                raise ValueError("quantity and side is necessary except TP/SL Orders")
 
         if (
-                self._type
-                in [
-                    OrderType.LIMIT,
-                    OrderType.STOP_MARKET,
-                    OrderType.STOP_LOSS_MARKET,
-                    OrderType.TAKE_PROFIT_MARKET,
-                ]
+            self._type
+            in [
+                OrderType.LIMIT,
+                OrderType.STOP_MARKET,
+                OrderType.STOP_LOSS_MARKET,
+                OrderType.TAKE_PROFIT_MARKET,
+            ]
         ) & (self._price is None):
             raise ValueError(
                 "When Comes to non-Market Orders (in this case, {}), you have to set order_price".format(
@@ -319,27 +324,26 @@ class Order(Action):
         :param market_price: market price (newest close price in this case)
         :return: None
         """
-        if self._type == OrderType.LIMIT:
-            if (self._price > market_price) & (self._side == OrderSide.LONG):
-                raise ValueError("LIMIT ORDER ERROR")
-            elif (self._price < market_price) & (
-                    self._side == OrderSide.SHORT
-            ):
-                raise ValueError(
-                    "LIMIT ORDER ERROR: SIDE=SHORT BUT PRICE < MARKET_PRICE"
-                )
-        if self._type == OrderType.STOP_MARKET:
+        self._validate_limit_order(market_price)
+
+        self._validate_stop_market_order(market_price)
+
+        self._validate_stop_loss_market_order(market_price)
+
+        self._validate_take_profit_market_order(market_price)
+
+    def _validate_take_profit_market_order(self, market_price):
+        if self._type == OrderType.TAKE_PROFIT_MARKET:
             if (self._price < market_price) & (self._side == OrderSide.LONG):
                 raise ValueError(
-                    "STOP_MARKET ORDER ERROR: SIDE=LONG BUT PRICE < MARKET_PRICE"
+                    "TAKE_PROFIT_MARKET ORDER ERROR: SIDE=LONG BUT PRICE > MARKET_PRICE"
                 )
-            elif (self._price > market_price) & (
-                    self._side == OrderSide.SHORT
-            ):
+            elif (self._price > market_price) & (self._side == OrderSide.SHORT):
                 raise ValueError(
-                    "STOP_MARKET ORDER ERROR: SIDE=SHORT BUT PRICE > MARKET_PRICE"
+                    "TAKE_PROFIT_MARKET ORDER ERROR: SIDE=SHORT BUT PRICE < MARKET_PRICE"
                 )
 
+    def _validate_stop_loss_market_order(self, market_price):
         if self._type == OrderType.STOP_LOSS_MARKET:
             if (self._price > market_price) & (self._side == OrderSide.LONG):
                 raise ValueError(
@@ -350,14 +354,24 @@ class Order(Action):
                     "STOP_LOSS_MARKET ORDER ERROR: SIDE=SHORT BUT PRICE < MARKET_PRICE"
                 )
 
-        if self._type == OrderType.TAKE_PROFIT_MARKET:
+    def _validate_stop_market_order(self, market_price):
+        if self._type == OrderType.STOP_MARKET:
             if (self._price < market_price) & (self._side == OrderSide.LONG):
                 raise ValueError(
-                    "TAKE_PROFIT_MARKET ORDER ERROR: SIDE=LONG BUT PRICE > MARKET_PRICE"
+                    "STOP_MARKET ORDER ERROR: SIDE=LONG BUT PRICE < MARKET_PRICE"
                 )
             elif (self._price > market_price) & (self._side == OrderSide.SHORT):
                 raise ValueError(
-                    "TAKE_PROFIT_MARKET ORDER ERROR: SIDE=SHORT BUT PRICE < MARKET_PRICE"
+                    "STOP_MARKET ORDER ERROR: SIDE=SHORT BUT PRICE > MARKET_PRICE"
+                )
+
+    def _validate_limit_order(self, market_price):
+        if self._type == OrderType.LIMIT:
+            if (self._price > market_price) & (self._side == OrderSide.LONG):
+                raise ValueError("LIMIT ORDER ERROR")
+            elif (self._price < market_price) & (self._side == OrderSide.SHORT):
+                raise ValueError(
+                    "LIMIT ORDER ERROR: SIDE=SHORT BUT PRICE < MARKET_PRICE"
                 )
 
     def trim(self, market_info: MarketInfo) -> Action:
@@ -374,76 +388,106 @@ class Order(Action):
         return self
 
     def is_fillable_at(
-            self,
-            account_info: Dict[str, Any],
-            market_info: MarketInfo,
-            open_price: float,
-            high_price: float,
-            low_price: float,
+        self,
+        account_info: Dict[str, Any],
+        market_info: MarketInfo,
+        open_price: float,
+        high_price: float,
+        low_price: float,
     ) -> bool:
         if self._type == OrderType.MARKET:
             self._price = market_info.apply_slippage(open_price, self._side)
             return True
 
         elif self._type == OrderType.LIMIT:
-            if self._side == OrderSide.SHORT:
-                if self._price < high_price:
-                    return True
-                return False
-            else:
-                if self._price > low_price:
-                    return True
-                return False
+            return self._is_fillable_limit(high_price, low_price)
 
         elif self._type == OrderType.STOP_MARKET:
-            if (low_price < self._price) & (self._price < high_price):
-                self._price = market_info.apply_slippage(
-                    self._price, self._side
-                )
-                return True
-            return False
+            return self._is_fillable_stop_market(
+                high_price=high_price, low_price=low_price, market_info=market_info
+            )
 
         elif self._type == OrderType.STOP_LOSS_MARKET:
             if account_info["position"]["side"] == OrderSide.LONG:
-                if self._price > low_price:
-                    self._quantity = account_info["position"]["size"]
-                    self._side = -account_info["position"]["side"]
-                    self._price = market_info.apply_slippage(
-                        self._price, self._side
-                    )
-                    return True
-                return False
+                return self._is_fillable_stop_los_market_long(
+                    account_info=account_info,
+                    low_price=low_price,
+                    market_info=market_info,
+                )
 
             if account_info["position"]["side"] == OrderSide.SHORT:
-                if self._price < high_price:
-                    self._quantity = account_info["position"]["size"]
-                    self._side = -account_info["position"]["side"]
-                    self._price = market_info.apply_slippage(
-                        self._price, self._side
-                    )
-                    return True
-                return False
+                return self._is_fillable_stop_loss_market_short(
+                    account_info=account_info,
+                    high_price=high_price,
+                    market_info=market_info,
+                )
 
         elif self._type == OrderType.TAKE_PROFIT_MARKET:
             if account_info["position"]["side"] == OrderSide.LONG:
-                if self._price < high_price:
-                    self._price = market_info.apply_slippage(
-                        self._price, self._side
-                    )
-                    self._quantity = account_info["position"]["size"]
-                    self._side = -account_info["position"]["side"]
-                    return True
-                return False
+                return self._is_fillable_take_profit_market_long(
+                    account_info=account_info,
+                    high_price=high_price,
+                    market_info=market_info,
+                )
 
             if account_info["position"]["side"] == OrderSide.SHORT:
-                if self._price > low_price:
-                    self._quantity = account_info["position"]["size"]
-                    self._side = -account_info["position"]["side"]
-                    return True
-                return False
+                return self._is_fillable_take_profit_market_short(
+                    account_info, low_price
+                )
 
         else:
             raise ValueError(f"Invalid Order Type: {self._type}")
+
+    def _is_fillable_take_profit_market_short(self, account_info, low_price):
+        if self._price > low_price:
+            self._quantity = account_info["position"]["size"]
+            self._side = -account_info["position"]["side"]
+            return True
+        return False
+
+    def _is_fillable_take_profit_market_long(
+        self, account_info, high_price, market_info
+    ):
+        if self._price < high_price:
+            self._price = market_info.apply_slippage(self._price, self._side)
+            self._quantity = account_info["position"]["size"]
+            self._side = -account_info["position"]["side"]
+            return True
+        return False
+
+    def _is_fillable_stop_loss_market_short(
+        self, account_info, high_price, market_info
+    ):
+        if self._price < high_price:
+            self._quantity = account_info["position"]["size"]
+            self._side = -account_info["position"]["side"]
+            self._price = market_info.apply_slippage(self._price, self._side)
+            return True
+        return False
+
+    def _is_fillable_stop_los_market_long(self, account_info, low_price, market_info):
+        if self._price > low_price:
+            self._quantity = account_info["position"]["size"]
+            self._side = -account_info["position"]["side"]
+            self._price = market_info.apply_slippage(self._price, self._side)
+            return True
+        return False
+
+    def _is_fillable_stop_market(self, high_price, low_price, market_info):
+        if (low_price < self._price) & (self._price < high_price):
+            self._price = market_info.apply_slippage(self._price, self._side)
+            return True
+        return False
+
+    def _is_fillable_limit(self, high_price, low_price):
+        if self._side == OrderSide.SHORT:
+            if self._price < high_price:
+                return True
+            return False
+        else:
+            if self._price > low_price:
+                return True
+            return False
 
     def set_id(self, id: int):
         self._id = id
@@ -455,7 +499,7 @@ class OrderCancellation(Action):
     """
 
     def __init__(self, id):
-        super(OrderCancellation, self).__init__()
+        super().__init__()
         self._id = id
 
     @property
@@ -472,7 +516,7 @@ class OrderCancellation(Action):
         """
         :return: order cancellation object as string
         """
-        return "OrderCancellation(id={})".format(self._id)
+        return f"OrderCancellation(id={self._id})"
 
 
 class Position:
@@ -520,9 +564,7 @@ class Position:
         :param price: current price
         :return: None
         """
-        self._unrealized_pnl = (
-                (price - self.avg_price) * self._side * self._size
-        )
+        self._unrealized_pnl = (price - self.avg_price) * self._side * self._size
 
     def _initialize_if_invalid_size(self, market_info: MarketInfo) -> None:
         """
@@ -539,7 +581,9 @@ class Position:
             # 부동소수점 버그 처리
             self._initialize()
 
-    def update(self, price: float, size: float, side: int, market_info: MarketInfo) -> float:
+    def update(
+        self, price: float, size: float, side: int, market_info: MarketInfo
+    ) -> float:
         """
         updates position with new transaction
 
@@ -552,18 +596,16 @@ class Position:
         realized_pnl = 0
 
         if size == 0:
-            return 0.
+            return 0.0
 
         if (self._side == side) | (self._side == 0):
             self._avg_price = (size * price + self._size * self._avg_price) / (
-                    size + self._size
+                size + self._size
             )
 
         else:
             if self._size <= size:
-                realized_pnl = (
-                        (price - self._avg_price) * self._side * self._size
-                )
+                realized_pnl = (price - self._avg_price) * self._side * self._size
             else:
                 realized_pnl = (price - self._avg_price) * self._side * size
 
@@ -599,9 +641,7 @@ class Account:
         :return: self
         """
         self._position.update_unrealized_pnl(price)
-        self._portfolio_value = (
-                self._position.info["unrealized_pnl"] + self._margin
-        )
+        self._portfolio_value = self._position.info["unrealized_pnl"] + self._margin
 
         return self
 
@@ -616,7 +656,9 @@ class Account:
         :return: realized profit and loss (p&L)
         """
 
-        ret = self._position.update(price, size, side, market_info=self._market_info)
+        ret = self._position.update(
+            price=price, size=size, side=side, market_info=self._market_info
+        )
         return ret
 
     @property
@@ -631,7 +673,9 @@ class Account:
             "margin": self._margin,
             "portfolio_value": self._portfolio_value,
             "position": position_info,
-            "has_position": int(position_info["size"] >= self._market_info.minimum_order_size),
+            "has_position": int(
+                position_info["size"] >= self._market_info.minimum_order_size
+            ),
         }
 
     @property
@@ -724,7 +768,7 @@ class Broker:
         return self
 
     def fill_pending_orders(
-            self, timestamp: int, open_price: float, high_price: float, low_price: float
+        self, timestamp: int, open_price: float, high_price: float, low_price: float
     ) -> object:
         """
         executes orders in order queue
@@ -741,8 +785,8 @@ class Broker:
             order: Order = self._order_queue[order_id]
 
             if order._reduce_only & (
-                    (not self._account.info["has_position"])
-                    | (self._account.info["position"]["side"] == order._side)
+                (not self._account.info["has_position"])
+                | (self._account.info["position"]["side"] == order._side)
             ):
                 del self._order_queue[order.id]
                 continue
@@ -753,14 +797,14 @@ class Broker:
                     continue
 
             if order.is_fillable_at(
-                    self._account.info,
-                    self._market_info,
-                    open_price,
-                    high_price,
-                    low_price,
+                account_info=self._account.info,
+                market_info=self._market_info,
+                open_price=open_price,
+                high_price=high_price,
+                low_price=low_price,
             ):
                 realized_pnl = self._account.update_position(
-                    order.price, order.quantity, order.side
+                    price=order.price, size=order.quantity, side=order.side
                 )
 
                 order_amount = order.quantity * order.price
@@ -778,7 +822,10 @@ class Broker:
 
                 transaction = {
                     "timestamp": timestamp,
-                    "realized": {"pnl": realized_pnl, "fee": fee, },
+                    "realized": {
+                        "pnl": realized_pnl,
+                        "fee": fee,
+                    },
                     "order": {
                         "price": order.price,
                         "quantity": order.quantity,
@@ -796,21 +843,22 @@ class Engine:
     """
     Engine Object
     """
+
     def __init__(
-            self,
-            data: pd.DataFrame,
-            initial_margin: float,
-            market_info: MarketInfo,
-            strategy_cls: type,
-            strategy_config: Dict[str, Any],
+        self,
+        data: pd.DataFrame,
+        initial_margin: float,
+        market_info: MarketInfo,
+        strategy_cls: type,
+        strategy_config: Dict[str, Any],
     ):
         self._broker: Broker = Broker(market_info, initial_margin)
         self._strategy: Strategy = strategy_cls(strategy_config)
 
         indicator_df: pd.DataFrame = self._strategy.calculate(data).dropna()
-        self._data_dict_list: List[
-            Dict[str, float]
-        ] = dataframe_as_list_of_dict(indicator_df)
+        self._data_dict_list: List[Dict[str, float]] = dataframe_as_list_of_dict(
+            indicator_df
+        )
 
         self._logger = Logger()
 
@@ -850,15 +898,13 @@ class Engine:
 
             actions = self._strategy.execute(state_dict)
 
-            self._broker.apply_actions(
-                actions, data["close"]
-            )
+            self._broker.apply_actions(actions, data["close"])
 
             transactions = self._broker.fill_pending_orders(
-                int(next_data["timestamp"]),
-                next_data["open"],
-                next_data["high"],
-                next_data["low"],
+                timestamp=int(next_data["timestamp"]),
+                open_price=next_data["open"],
+                high_price=next_data["high"],
+                low_price=next_data["low"],
             )
 
             account_info["timestamp"] = next_data["timestamp"]

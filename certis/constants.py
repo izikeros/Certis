@@ -5,6 +5,7 @@ class OrderSide:
     LONG: betting for upside
     SHORT: betting for downside
     """
+
     SHORT = -1
     LONG = 1
     SIDES = [SHORT, LONG]
@@ -20,6 +21,7 @@ class OrderType:
     STOP_LOSS_MARKET,
     TAKE_PROFIT_MARKET
     """
+
     MARKET = "MARKET"
     LIMIT = "LIMIT"
     STOP_MARKET = "STOP_MARKET"

@@ -1,10 +1,10 @@
 import setuptools
 
-with open("README.md", "r") as fh:
+with open("README.md") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="Certis", # Replace with your own username
+    name="Certis",  # Replace with your own username
     version="0.0.2",
     author="Yeachan-Heo",
     author_email="rlstart@kakao.com",
@@ -18,5 +18,5 @@ setuptools.setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires=">=3.6",
 )

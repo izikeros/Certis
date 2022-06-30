@@ -1,17 +1,21 @@
-import random, string
+import random
+import string
+from typing import Dict
+from typing import List
+
 import pandas as pd
-from typing import *
 
 
-
-def generate_random_string(N: int=10) -> str:
+def generate_random_string(N: int = 10) -> str:
     """
     generates random string
 
     :param N: random string's length
     :return: random string
     """
-    return "".join(random.choices(string.ascii_uppercase + string.digits, k=N))
+    return "".join(  # nosec B311
+        random.choices(string.ascii_uppercase + string.digits, k=N)  # nosec B311
+    )  # nosec B311
 
 
 def dataframe_as_list_of_dict(df: pd.DataFrame) -> List[Dict[str, float]]:

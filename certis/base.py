@@ -1,12 +1,17 @@
+import json
+import os
+from typing import Any
+from typing import Dict
+from typing import List
+
 import pandas as pd
-import os, json
-from typing import *
 
 
 class Action:
     """
     Abstract class for Order, OrderCancellation
     """
+
     def __init__(self):
         pass
 
@@ -15,6 +20,7 @@ class Strategy:
     """
     Abstract method for generating user-defined trading strategies with certis
     """
+
     def __init__(self, config, name="CertisStrategy"):
         self.config = config
         self.name = name
@@ -33,6 +39,7 @@ class Logger:
     """
     Logger Object
     """
+
     def __init__(self):
         self._transactions = []
         self._account_infos = []
@@ -113,5 +120,3 @@ class Logger:
 
         with open(os.path.join(target_directory, "unfilled_orders.json"), "w") as f:
             f.write(json.dumps(self._unfilled_orders))
-
-

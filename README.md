@@ -7,7 +7,7 @@ You can install by running:
 ```sh
 pip install certis
 ```
-Or, if you want to tinker with the engine, you can clone this repo and install editable package by running: 
+Or, if you want to tinker with the engine, you can clone this repo and install editable package by running:
 ```sh
 pip install -e ."
 ```
