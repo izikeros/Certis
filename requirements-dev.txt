@@ -1,0 +1,35 @@
+# install base requirements
+-r requirements.txt
+
+# ========= Dev requirements
+## --- Jupyter ----
+jupyter==1.0.0
+jupyter-contrib-nbextensions==0.5.1
+ipywidgets==7.7.0
+jupytext==1.13.7
+jupyter-black==0.3.1
+# jupyter nbextension install https://github.com/drillan/jupyter-black/archive/master.zip --user
+# jupyter nbextension enable jupyter-black-master/jupyter-black
+
+# --- Pytest ----
+pytest-icdiff==0.5        # use icdiff for better error messages in pytest assertions.
+pytest-sugar==0.9.4       # changes the default look and feel of pytest (e.g. progressbar, show tests that fail instantly).
+#pytest-clarity==1.0.1    # an alternative, colourful diff output for failing assertions.
+#pytest-cov               # pytest plugin for measuring coverage.
+#pytest-monkeytype        # generate Monkeytype annotations from your pytest tests.
+#pytest-mock              # thin-wrapper around the mock package for easier use with pytes
+
+# --- PyQA
+black==22.3.0				# Uncompromised code formatter
+flake8==4.0.1
+flake8-bugbear==22.3.23		# search for common bugs
+flake8-docstrings==1.6.0	# ensure that doctstings are added and are poperly formatted
+flake8-bandit==3.0.0		# check potential security issues
+flake8-import-order			# expect import order follow selected convention
+flake8-keyword-arguments	# when there is more than two input arguments, expect usage of keyword arguments
+pre-commit==2.17.0			# use pre-commit with hooks
+mypy==0.942					# type checking
+data-science-types==0.2.23  # Type stubs for Python machine learning libraries
+# tox==3.24.4 				# run tests in isolated environments
+#safety		        		# list outdated packages with security issues (usage: safety check)
+pip-upgrader                # find and upgrade outdated packages (and requirements files)
