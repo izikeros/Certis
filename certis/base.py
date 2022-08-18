@@ -1,3 +1,4 @@
+"""Module with abstract classes for Action (create or cancel order, etc.), Strategy and logger."""
 import json
 import os
 from typing import Any
@@ -8,18 +9,14 @@ import pandas as pd
 
 
 class Action:
-    """
-    Abstract class for Order, OrderCancellation
-    """
+    """Abstract class for Order, OrderCancellation."""
 
     def __init__(self):
         pass
 
 
 class Strategy:
-    """
-    Abstract method for generating user-defined trading strategies with certis
-    """
+    """Abstract method for generating user-defined trading strategies with certis."""
 
     def __init__(self, config, name="CertisStrategy"):
         self.config = config
@@ -36,9 +33,7 @@ class Strategy:
 
 
 class Logger:
-    """
-    Logger Object
-    """
+    """Logger Object."""
 
     def __init__(self):
         self._transactions = []

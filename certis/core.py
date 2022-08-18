@@ -18,10 +18,8 @@ from certis.util import generate_random_string
 warnings.filterwarnings("ignore")
 
 
-class MarketInfo:
-    """
-    takes & contains all these market information we need
-    """
+class ExchangeInfo:
+    """Take & store all exchange information we need."""
 
     def __init__(
         self,
@@ -32,20 +30,15 @@ class MarketInfo:
         minimum_order_size: float,
         **kwargs,
     ):
-        """
-        initializes MarketInfo class, takes all these market information we need
+        """Initialize ExchangeInfo class, take all information we need
 
-        :param maker_fee:
-        maker fee, fee for market orders. 1% = 0.01
-        :param taker_fee:
-        taker fee, fee for limit orders. 1% = 0.01
-        :param slippage:
-        slippage for market orders. 1% = 0.01
-        :param tick_size:
-        tick size for this data. in other words, minimum change unit.
-        like (123.123, 12.124, 12.122 ... ), tick size is 0.001
-        :param minimum_order_size:
-        minimum order size for this data.
+        Args:
+        maker_fee:  maker fee, fee for market orders. 1% = 0.01
+        taker_fee:  taker fee, fee for limit orders. 1% = 0.01
+        slippage:   slippage for market orders. 1% = 0.01
+        tick_size:  tick size for this data. in other words, minimum change unit.
+                    like (123.123, 12.124, 12.122 ... ), tick size is 0.001
+        minimum_order_size: minimum order size for this data.
         """
 
         self._maker_fee = maker_fee
@@ -374,12 +367,14 @@ class Order(Action):
                     "LIMIT ORDER ERROR: SIDE=SHORT BUT PRICE < MARKET_PRICE"
                 )
 
-    def trim(self, market_info: MarketInfo) -> Action:
+    def trim(self, market_info: ExchangeInfo) -> Action:
         """
-        trims order itself
+        Trims order itself
 
-        :param market_info: market info Object for this backtest
-        :return: self
+        Args:
+        market_info: market info Object for this backtest
+
+        Returns: self
         """
         self._price, self._quantity = (
             market_info.trim_order_price(self._price),
@@ -390,7 +385,7 @@ class Order(Action):
     def is_fillable_at(
         self,
         account_info: Dict[str, Any],
-        market_info: MarketInfo,
+        market_info: ExchangeInfo,
         open_price: float,
         high_price: float,
         low_price: float,
@@ -566,7 +561,7 @@ class Position:
         """
         self._unrealized_pnl = (price - self.avg_price) * self._side * self._size
 
-    def _initialize_if_invalid_size(self, market_info: MarketInfo) -> None:
+    def _initialize_if_invalid_size(self, market_info: ExchangeInfo) -> None:
         """
         initializes if invalid size
         invalid size: size < minimum order size
@@ -574,7 +569,7 @@ class Position:
         this can be critical for backtesting
         so we take this as an exception
 
-        :param market_info: MarketInfo object
+        :param market_info: ExchangeInfo object
         :return: None
         """
         if self._size < market_info.minimum_order_size:
@@ -582,7 +577,7 @@ class Position:
             self._initialize()
 
     def update(
-        self, price: float, size: float, side: int, market_info: MarketInfo
+        self, price: float, size: float, side: int, market_info: ExchangeInfo
     ) -> float:
         """
         updates position with new transaction
@@ -590,7 +585,7 @@ class Position:
         :param price: price of transaction
         :param size: quantity of transaction
         :param side: side of transaction
-        :param market_info: MarketInfo object
+        :param market_info: ExchangeInfo object
         :return: realized profit and loss (p&L)
         """
         realized_pnl = 0
@@ -626,11 +621,11 @@ class Account:
     Certis Account Object
     """
 
-    def __init__(self, margin: float, market_info: MarketInfo):
+    def __init__(self, margin: float, market_info: ExchangeInfo):
         self._margin = margin
         self._portfolio_value = margin
         self._position = Position()
-        self._market_info: MarketInfo = market_info
+        self._market_info: ExchangeInfo = market_info
 
     def update_portfolio_value(self, price: float) -> object:
         """
@@ -646,14 +641,15 @@ class Account:
         return self
 
     def update_position(self, price: float, size: float, side: int):
-        """
-        updates position with new transaction
+        """Update position with new transaction.
 
-        :param price: price of transaction
-        :param size: quantity of transaction
-        :param side: side of transaction
-        :param market_info: MarketInfo object
-        :return: realized profit and loss (p&L)
+        Args:
+            price: price of transaction
+            size: quantity of transaction
+            side: side of transaction
+
+        Returns:
+            realized profit and loss (p&L)
         """
 
         ret = self._position.update(
@@ -702,32 +698,31 @@ class Account:
 
 
 class Broker:
-    """
-    Virtual Broker object for Certis
-    """
+    """Virtual Broker object for Certis."""
 
-    def __init__(self, market_info: MarketInfo, initial_margin: float):
-        self._account: Account = Account(initial_margin, market_info)
-        self._market_info: MarketInfo = market_info
+    def __init__(self, exchange_info: ExchangeInfo, initial_margin: float):
+        self._account: Account = Account(initial_margin, exchange_info)
+        self._market_info: ExchangeInfo = exchange_info
         self._order_queue: Dict[str, Order] = dict()
 
     @property
     def account_info(self):
-        """
-        account information
+        """Account information
 
         :return: self._account.info
         """
         return self._account.info
 
     def apply_actions(self, actions: List[Action], price: float) -> None:
-        """
-        applies actions,
-        which is List of Order / OrderCancellation Objects
+        """Apply actions (orders, order cancellation) provided as a list.
 
-        :param actions: list of actions (Order / OrderCancellation Objects)
-        :param price: current price
-        :return: None
+        Execute actions from the list of Order / OrderCancellation Objects.
+
+        Args:
+            actions: list of actions (Order / OrderCancellation Objects)
+            price: current price
+
+        Returns: None
         """
         for action in actions:
             if isinstance(action, Order):
@@ -736,12 +731,11 @@ class Broker:
             if isinstance(action, OrderCancellation):
                 self._cancel_order(action)
 
-    def _cancel_order(self, action: OrderCancellation) -> object:
-        """
-        executes OrderCancellation Object
+    def _cancel_order(self, action: OrderCancellation) -> Optional[object]:
+        """Executes OrderCancellation Object
         if OrderCancellation.id is all: cancels all orders
 
-        :param action: OrderCancellation Object
+        action: OrderCancellation Object
         :return: self
         """
         if action.id.lower() == "all":
@@ -751,7 +745,7 @@ class Broker:
 
         return self
 
-    def _place_order(self, order: Order) -> object:
+    def _place_order(self, order: Order) -> Optional[object]:
         """
         places order in order_queue
 
@@ -848,7 +842,7 @@ class Engine:
         self,
         data: pd.DataFrame,
         initial_margin: float,
-        market_info: MarketInfo,
+        market_info: ExchangeInfo,
         strategy_cls: type,
         strategy_config: Dict[str, Any],
     ):
@@ -870,8 +864,11 @@ class Engine:
         """
         runs backtest
 
-        :param use_tqdm: use tqdm progressbar or not
-        :return: Logger object
+        Args:
+            use_tqdm: use tqdm progressbar or not
+            use_margin_call: use margin call or not
+
+        Returns: Logger object
         """
         iterator = range(len(self._data_dict_list) - 1)
 

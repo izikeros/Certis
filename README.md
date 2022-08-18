@@ -24,5 +24,21 @@ Start by reading a docs of certis or look into examples folder.
 - PRs and Issues are welcomed
 - Contact me anytime with questions.
 
+# Generating documentation
+You need sphinx to generate documentation. Check out how to install on your system:
+```sh
+# on debian-like systems (Debian, Ubuntu, etc.)
+$ apt-get install python3-sphinx`
+
+# on macos
+$ brew install sphinx-doc
+# add it to your path - add the following line to your ~/.bash_profile
+export PATH="/usr/local/opt/sphinx-doc/bin:$PATH"
+```
+## Missing
+- optimization
+- order sizing
+- metrics calculation
+
 ## Credits
 This is a fork of [Certis](https://certis.readthedocs.io/en/latest/) written originally by [Yeachan-Heo](https://github.com/Yeachan-Heo)
