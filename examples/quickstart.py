@@ -112,7 +112,7 @@ class MyFirstStrategy(certis.Strategy):
             }
         """
 
-        has_position = state_dict["account_info"]["has_position"]
+        # has_position = state_dict["account_info"]["has_position"]
         portfolio_value = state_dict["account_info"]["portfolio_value"]
         position_size = state_dict["account_info"]["position"]["size"]
         data = state_dict["data"]
@@ -187,7 +187,11 @@ initial_margin = 100000
 strategy_config = {"MA_PERIOD": MA_WINDOW}
 
 engine = certis.Engine(
-    fin_data, initial_margin, market_info, MyFirstStrategy, strategy_config
+    data=fin_data,
+    initial_margin=initial_margin,
+    market_info=market_info,
+    strategy_cls=MyFirstStrategy,
+    strategy_config=strategy_config,
 )
 
 # %%

@@ -33,7 +33,7 @@
 ;T - flake8-print
 ;M - flake8-pytest-mark
 
-ignore =C, T003, M502, N802, F405, T001, D100, D101, D104, D105, D107, W503
+ignore =C, T003, M502, N802, F405, T001, D100, D101, D104, D105, D107, W503, E203
 
 #select = B
 

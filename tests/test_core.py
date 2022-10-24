@@ -24,4 +24,3 @@ class TestEngine:
             fin_data, initial_margin, market_info, MACrossing, strategy_config
         )
         engine.run()
-        assert True

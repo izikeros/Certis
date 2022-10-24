@@ -1,5 +1,6 @@
 import warnings
 from typing import Any
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -87,7 +88,7 @@ class ExchangeInfo:
         """
         return self._minimum_order_size
 
-    def trim_order_size(self, size: float | None) -> float | None:
+    def trim_order_size(self, size: Optional[float]) -> Optional[float]:
         """
         trims order size by doing
         (size // minimum order size) * minimum order size
@@ -139,7 +140,7 @@ class Order(Action):
         order_side=None,
         order_quantity=None,
         order_type: str = None,
-        order_price: np.float64 | None = None,
+        order_price: Optional[np.float64] = None,
         reduce_only: bool = False,
     ):
         super().__init__()
@@ -728,7 +729,7 @@ class Broker:
             if isinstance(action, OrderCancellation):
                 self._cancel_order(action)
 
-    def _cancel_order(self, action: OrderCancellation) -> object | None:
+    def _cancel_order(self, action: OrderCancellation) -> Optional[object]:
         """Executes OrderCancellation Object
         if OrderCancellation.id is all: cancels all orders
 
@@ -742,7 +743,7 @@ class Broker:
 
         return self
 
-    def _place_order(self, order: Order) -> object | None:
+    def _place_order(self, order: Order) -> Optional[object]:
         """
         places order in order_queue
 
