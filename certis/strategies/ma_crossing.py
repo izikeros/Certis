@@ -1,5 +1,3 @@
-from typing import List
-
 import certis
 
 
@@ -16,7 +14,7 @@ class MACrossing(certis.Strategy):
         data["MA"] = data["close"].rolling(self.ma_period).mean()
         return data
 
-    def execute(self, state_dict) -> List[certis.core.Action]:
+    def execute(self, state_dict) -> list[certis.core.Action]:
         actions = []
 
         """

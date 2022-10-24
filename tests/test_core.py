@@ -1,7 +1,6 @@
 import pandas as pd
-
-from certis import ExchangeInfo
 from certis import Engine
+from certis import ExchangeInfo
 from certis.strategies.ma_crossing import MACrossing
 
 
@@ -21,6 +20,8 @@ market_info = ExchangeInfo(
 
 class TestEngine:
     def test_engine__smoke(self):
-        engine = Engine(fin_data, initial_margin, market_info, MACrossing, strategy_config)
+        engine = Engine(
+            fin_data, initial_margin, market_info, MACrossing, strategy_config
+        )
         engine.run()
         assert True

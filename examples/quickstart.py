@@ -29,12 +29,16 @@
 # %%
 # Add parent directory to path
 import sys
-from typing import List
+
+import certis
+import matplotlib.pyplot as plt
+import pandas as pd
+import plotly.graph_objects as go
+from yfinance import Ticker
 
 sys.path.insert(0, "..")
 
 # %%
-import certis
 
 # %% [markdown] tags=[]
 # # Supported Order Types
@@ -89,7 +93,7 @@ class MyFirstStrategy(certis.Strategy):
         data["MA"] = data["close"].rolling(self.ma_period).mean()
         return data
 
-    def execute(self, state_dict) -> List[certis.core.Action]:
+    def execute(self, state_dict) -> list[certis.core.Action]:
         actions = []
 
         """
@@ -161,7 +165,6 @@ market_info = certis.ExchangeInfo(
 # Certis Supports pandas DataFrame with `[timestamp, open, high, low, close, volume]` with datetime indexes
 
 # %%
-from yfinance import Ticker
 
 data = Ticker("BTC-USD").history(period="max")
 data = data[data.columns[:5]]
@@ -198,8 +201,6 @@ engine.run()
 # - `engine.logger.unfilled_order`: unfilled order for timestamp-by-timestamp
 
 # %%
-import pandas as pd
-import matplotlib.pyplot as plt
 
 # %%
 account_info_df = pd.DataFrame(engine.logger.account_infos)
@@ -265,7 +266,6 @@ sma
 
 # %%
 # Plotting
-import plotly.graph_objects as go
 
 # import plotly.io as pio
 # pio.templates.default = "plotly_dark"

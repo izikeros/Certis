@@ -1,8 +1,5 @@
 import warnings
 from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -90,7 +87,7 @@ class ExchangeInfo:
         """
         return self._minimum_order_size
 
-    def trim_order_size(self, size: Optional[float]) -> Optional[float]:
+    def trim_order_size(self, size: float | None) -> float | None:
         """
         trims order size by doing
         (size // minimum order size) * minimum order size
@@ -142,7 +139,7 @@ class Order(Action):
         order_side=None,
         order_quantity=None,
         order_type: str = None,
-        order_price: Optional[np.float64] = None,
+        order_price: np.float64 | None = None,
         reduce_only: bool = False,
     ):
         super().__init__()
@@ -166,7 +163,7 @@ class Order(Action):
 
         self._check_validity()
 
-    def __dict__(self) -> Dict[str, Any]:
+    def __dict__(self) -> dict[str, Any]:
         """
         converts order object as dict
         for logging
@@ -221,7 +218,7 @@ class Order(Action):
     def side(self) -> int:
         """
         order side defined in certis.core.OrderSide
-        required in every orders except for STOP_LOSS_MARKET & TAKE_PROFIT_MARKET orders
+        required in every order except for STOP_LOSS_MARKET & TAKE_PROFIT_MARKET orders
 
         :return: self._side
         """
@@ -384,7 +381,7 @@ class Order(Action):
 
     def is_fillable_at(
         self,
-        account_info: Dict[str, Any],
+        account_info: dict[str, Any],
         market_info: ExchangeInfo,
         open_price: float,
         high_price: float,
@@ -530,7 +527,7 @@ class Position:
         self._unrealized_pnl = 0
 
     @property
-    def info(self) -> Dict[str, Any]:
+    def info(self) -> dict[str, Any]:
         """
         position as dict object
 
@@ -658,7 +655,7 @@ class Account:
         return ret
 
     @property
-    def info(self) -> Dict[str, Any]:
+    def info(self) -> dict[str, Any]:
         """
         gives position info as dictionary
 
@@ -703,7 +700,7 @@ class Broker:
     def __init__(self, exchange_info: ExchangeInfo, initial_margin: float):
         self._account: Account = Account(initial_margin, exchange_info)
         self._market_info: ExchangeInfo = exchange_info
-        self._order_queue: Dict[str, Order] = dict()
+        self._order_queue: dict[str, Order] = dict()
 
     @property
     def account_info(self):
@@ -713,7 +710,7 @@ class Broker:
         """
         return self._account.info
 
-    def apply_actions(self, actions: List[Action], price: float) -> None:
+    def apply_actions(self, actions: list[Action], price: float) -> None:
         """Apply actions (orders, order cancellation) provided as a list.
 
         Execute actions from the list of Order / OrderCancellation Objects.
@@ -731,7 +728,7 @@ class Broker:
             if isinstance(action, OrderCancellation):
                 self._cancel_order(action)
 
-    def _cancel_order(self, action: OrderCancellation) -> Optional[object]:
+    def _cancel_order(self, action: OrderCancellation) -> object | None:
         """Executes OrderCancellation Object
         if OrderCancellation.id is all: cancels all orders
 
@@ -745,7 +742,7 @@ class Broker:
 
         return self
 
-    def _place_order(self, order: Order) -> Optional[object]:
+    def _place_order(self, order: Order) -> object | None:
         """
         places order in order_queue
 
@@ -844,13 +841,13 @@ class Engine:
         initial_margin: float,
         market_info: ExchangeInfo,
         strategy_cls: type,
-        strategy_config: Dict[str, Any],
+        strategy_config: dict[str, Any],
     ):
         self._broker: Broker = Broker(market_info, initial_margin)
         self._strategy: Strategy = strategy_cls(strategy_config)
 
         indicator_df: pd.DataFrame = self._strategy.calculate(data).dropna()
-        self._data_dict_list: List[Dict[str, float]] = dataframe_as_list_of_dict(
+        self._data_dict_list: list[dict[str, float]] = dataframe_as_list_of_dict(
             indicator_df
         )
 

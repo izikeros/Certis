@@ -2,8 +2,6 @@
 import json
 import os
 from typing import Any
-from typing import Dict
-from typing import List
 
 import pandas as pd
 
@@ -28,7 +26,7 @@ class Strategy:
     def calculate(self, data: pd.DataFrame):
         return self._calculate(data)
 
-    def execute(self, state_dict: Dict[str, Any]) -> List[Action]:
+    def execute(self, state_dict: dict[str, Any]) -> list[Action]:
         raise NotImplementedError
 
 
@@ -41,7 +39,7 @@ class Logger:
         self._unfilled_orders = []
 
     @property
-    def transactions(self) -> List[Dict[str, Any]]:
+    def transactions(self) -> list[dict[str, Any]]:
         """
         list of transactions during the backtest.
         each transaction is generated when order fills
@@ -51,7 +49,7 @@ class Logger:
         return self._transactions
 
     @property
-    def account_infos(self) -> List[Dict[str, Any]]:
+    def account_infos(self) -> list[dict[str, Any]]:
         """
         account infos during the backtest.
         recorded interval-by-interval
@@ -61,7 +59,7 @@ class Logger:
         return self._account_infos
 
     @property
-    def unfilled_orders(self) -> List[Dict[str, Any]]:
+    def unfilled_orders(self) -> list[dict[str, Any]]:
         """
         unfilled orders during the backtest.
         recorded interval-by-interval
@@ -70,7 +68,7 @@ class Logger:
         """
         return self._unfilled_orders
 
-    def add_transaction(self, transactions: List[Dict[str, Any]]) -> None:
+    def add_transaction(self, transactions: list[dict[str, Any]]) -> None:
         """
         adds transactions
 
@@ -79,7 +77,7 @@ class Logger:
         """
         self._transactions.extend(transactions)
 
-    def add_account_info(self, account_info: Dict[str, Any]) -> None:
+    def add_account_info(self, account_info: dict[str, Any]) -> None:
         """
         adds account info
 
@@ -88,7 +86,7 @@ class Logger:
         """
         self._account_infos.append(account_info)
 
-    def add_unfilled_orders(self, unfilled_orders: Dict[str, Any]) -> None:
+    def add_unfilled_orders(self, unfilled_orders: dict[str, Any]) -> None:
         """
         adds unfilled orders
 
