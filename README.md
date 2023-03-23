@@ -82,5 +82,9 @@ Exemplary strategy as class:
 
 There are classes exposed directly from Ceris package: "Strategy", "Order", "OrderType", "OrderSide", "Action" (why these?)
 
+## Codebase Visualization
+## Codebase Visualization
+![Visualization of the codebase](./diagram.svg)
+
 ## Credits
 This is a fork of [Certis](https://certis.readthedocs.io/en/latest/) written originally by [Yeachan-Heo](https://github.com/Yeachan-Heo)
