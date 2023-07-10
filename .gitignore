@@ -6,3 +6,6 @@
 .pytest_cache/
 .tox/
 */__pycache__
+/docs/
+/docs3/
+/sdocs/
